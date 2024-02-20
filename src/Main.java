@@ -2,10 +2,49 @@ import java.util.Scanner;
 import static java.lang.System.exit;
 public class Main
 {
+    // Overarching Sudoku type
+    // all of my experience is with C, C++ and C# so hopefully this works
+    // it wasn't working unless I made it static for some reason. Good thing I only need 1 I guess??
+    private static class Sudoku
+    {
+        private int[][] board;     /** This is the puzzle as input by the user. **/
+        private int[][] solution;  /** This is the puzzle solution. **/
+
+        // Class constructor, setters and getters below.
+        public Sudoku()
+        {
+            board = new int[9][9];
+            solution = new int[9][9];
+        }
+        public void setBoard(int[][] input)
+        {
+            board = input;
+        }
+        public void setSolution(int[][] solved)
+        {
+            solution = solved;
+        }
+        public int[] getBoardRow(int rowIndex)
+        {
+            return board[rowIndex];
+        }
+        public int[] getBoardColumn(int colIndex)
+        {
+            int[] currentCol = new int[9];
+            for (int i = 0; i < 9; i++)
+                currentCol[i] = board[i][colIndex];
+            return currentCol;
+        }
+        public int[][] getSolution()
+        {
+            return solution;
+        }
+
+    }
     private static int[][] InitializeSudoku()
     {
         String newLine = ""; // stores input from user to be turned into a sudoku line
-        int[][] sudoku = new int[9][9]; // [row][column]
+        int[][] newBoard = new int[9][9]; // [row][column]
         boolean validity = true;
         System.out.println("Welcome to Sudoku Solver. Please start by entering the first line of the sudoku you would like me to solve. Fill in any blank spaces with 0.");
 
@@ -31,77 +70,92 @@ public class Main
                 // iterates column within upper row. since I need the extra dimension, foreach won't work here.
                 for (iteratorY = 0; iteratorY < 9; iteratorY++)
                 {
-                    sudoku[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
+                    newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
                 }
             } while (!validity); // if validity is false, loop will repeat.
         }
 
-/**------------------------------------------------------------------------------------------------------------
-*   Sudoku rules are as follows:                                                                              *
-*     * A row cannot contain the same value more than once and must contain every value from 1-9              *
-*     * A column cannot contain the same value more than once and must contain every value from 1-9           *
-*     * Each 3x3 subgrid cannot contain the same value more than once and must contain every value from 1-9   *
-*     * A Sudoku must contain enough information for the Sudoku to be solvable                                *
-------------------------------------------------------------------------------------------------------------**/
+        return newBoard;
+    }
+
+    private static boolean Validator(Sudoku board) {
+        /**------------------------------------------------------------------------------------------------------------
+         *   Sudoku rules are as follows:                                                                              *
+         *     * A row cannot contain the same value more than once and must contain every value from 1-9              *
+         *     * A column cannot contain the same value more than once and must contain every value from 1-9           *
+         *     * Each 3x3 subgrid cannot contain the same value more than once and must contain every value from 1-9   *
+         *     * A Sudoku must contain enough information for the Sudoku to be solvable                                *
+         ------------------------------------------------------------------------------------------------------------**/
 
         System.out.println("Checking Sudoku's syntactic validity...");
 
-        /** ROW VALIDITY CHECK **/
+        /** Row Validity Checks **/
 
         int[] valueBank = new int[9];
-        validity = true;
-        for (int[] row : sudoku) {
-            for (int cell : row) {
-                // checks to make sure the values are within acceptable range, i.e. not -1 or -2. This will run through every value, so it's not needed in future checks.
-                if (cell < 0 || cell > 9) {
-                    System.out.println("Error, input contained letters or numeric values outside of expected bounds. Please try again:");
-                    validity = false;
-                }
-                // uses the valueBank array to ensure the rule of values in a row is followed
-                if (valueBank[cell] == 1) {
-                    System.out.println("Error, input contains " + cell + " multiple times, which is invalid for a Sudoku. Please try again:");
-                    validity = false;
-                }
-                // sets the valueBank index for the number in the cell to 1 so that it can be checked against the next iteration.
-                valueBank[cell] = 1;
-            }
-        }
-        // zero out valueBank for future use
-        for (int value : valueBank)
-            value = 0;
-
-        /** COLUMN VALIDITY CHECK **/
-
-        // iterate by column instead of row
-        for (iteratorY = 0; iteratorY < 9; iteratorY++)
+        boolean validity = true;
+        int i;
+        for (i = 0; i < 9; i++)
         {
-            for (iteratorX = 0; iteratorX < 9; iteratorX++)
+            for (int cell : board.getBoardRow(i))
             {
-                // uses the valueBank array to ensure the rule of values in a column is followed
-                if (valueBank[sudoku[iteratorX][iteratorY]] == 1) {
-                    System.out.println("Error, column " + iteratorY + " contains " + sudoku[iteratorX][iteratorY] + " multiple times, which is invalid for a Sudoku. Please try again:");
+                if (valueBank[cell] == 1)
                     validity = false;
-                }
-                valueBank[sudoku[iteratorX][iteratorY]] = 1;
+                else
+                    valueBank[cell] = 1;
             }
         }
         // zero out valueBank for future use
         for (int value : valueBank)
             value = 0;
 
-        
+        /** Column Validity Checks **/
 
-        if (!validity)
+        for (i = 0; i < 9; i++)
         {
-            System.out.println("There's a problem with your Sudoku. Please review any error messages and try again.");
-            exit(1);
+            for (int cell : board.getBoardColumn(i))
+            {
+                if (valueBank[cell] == 1)
+                    validity = false;
+                else
+                    valueBank[cell] = 1;
+            }
         }
+        // zero out valueBank for future use
+        for (int value : valueBank)
+            value = 0;
 
-        return sudoku;
+        /** Cell Validity Checks **/
+
+        // todo: break board into 3x3s and iterate to ensure no duplicates except 0
+
+        return validity;
     }
+
+    private static int[][] SolutionFinder(Sudoku sudoku)
+    {
+        System.out.println("Beginning solving algorithm...");
+        // todo: use iterative steps to find solution. Submethods may be needed.
+        /** Creative use of Sudoku's rules are the best way to solve Sudokus. For example,
+            if 3 is found in 2 columns within a 3x9 column, 3 in the remaining 3x3 block
+            must be in the final column.
+         **/
+        return new int[9][9];
+    }
+
     public static void main(String[] args)
     {
-        int[][] sudoku = InitializeSudoku();
+        Sudoku sudoku = new Sudoku();
+        sudoku.setBoard(InitializeSudoku());
+
+        if (!Validator(sudoku))
+        {
+            System.out.println("The Sudoku provided wasn't valid. Exiting...");
+            exit(1);
+        }
+        else
+            System.out.println("The Sudoku is syntactically sound.");
+
+        sudoku.setSolution(SolutionFinder(sudoku));
 
 
     }
