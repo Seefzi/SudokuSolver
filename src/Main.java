@@ -46,7 +46,7 @@ public class Main
          // stores input from user to be turned into a sudoku line
         int[][] newBoard = new int[9][9]; // [row][column]
         boolean validity = true;
-        String newLine;
+        String newLine = "";
         System.out.println("Welcome to Sudoku Solver. Please start by entering the first line of the sudoku you would like me to solve. Fill in any blank spaces with 0.");
 
         // iteratorX == row. iteratorY == column.
@@ -56,21 +56,21 @@ public class Main
         for (iteratorX = 0; iteratorX < 9; iteratorX++)
         {
             do {
-                // Due to reasons, this doesn't work. lol
+                // I thought it was Java screwing me, turns out it was secretly working fine! ugh. Added this println to demonstrate that it's working.
+                System.out.println("Line " + (iteratorX + 1) + ":");
                 Scanner input = new Scanner(System.in);
-                int middleMan = input.nextInt();
-                newLine = String.valueOf(middleMan);
+                newLine = input.nextLine();
                 validity = true;
 
                 // prevents out of bounds exceptions by checking length validity.
-                if (newLine.length() < 9)
+                if (newLine.length() != 9)
                 {
                     System.out.println("Error, input was below expected length. Remember, Sudokus are 9x9. Please try again:");
                     validity = false;
                 }
 
                 // iterates column within upper row. since I need the extra dimension, foreach won't work here.
-                for (iteratorY = 0; iteratorY < 9; iteratorY++)
+                for (iteratorY = 0; iteratorY < 9 && validity; iteratorY++)
                 {
                     newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
                 }
@@ -103,15 +103,16 @@ public class Main
         {
             for (int cell : board.getBoardRow(i))
             {
-                if (valueBank[cell] == 1 && cell != 0)
+                if (cell != 0 && valueBank[cell] == 1)
                     validity = false;
                 else
                     valueBank[cell] = 1;
             }
+            for (int value : valueBank)
+                valueBank[value] = 0;
         }
-        // zero out valueBank for future use
-        for (int value : valueBank)
-            valueBank[value] = 0;
+
+        System.out.println(validity);
 
         /** Column Validity Checks **/
 
@@ -124,10 +125,11 @@ public class Main
                 else
                     valueBank[cell] = 1;
             }
+            // zero out valueBank for future use
+            for (int value : valueBank)
+                valueBank[value] = 0;
         }
-        // zero out valueBank for future use
-        for (int value : valueBank)
-            valueBank[value] = 0;
+        System.out.println(validity);
 
         /** Cell Validity Checks **/
 
@@ -140,9 +142,16 @@ public class Main
         **/
 
         int[] block = new int[9]; // this stores the 3x3 block to be checked
+        i = 0;
+        // it's getting stuck here somewhere
         for (int blockIndex = 0; blockIndex < 9; blockIndex++) {
-            for (i = 0; i < i + 9; i++) {
-                block[i] = board.getBoardRow((i / 3))[(i % 3) + (blockIndex / 3)];
+
+            for (i = 0; i < 9; i++) {
+                // I need 3 values per row for 3 rows at a time
+                // 0-2 = row 0, 3-5 = row 1, 6-8 = row 2
+                // block 0, 1, 2 = row 0
+                block[i] = board.getBoardRow((i / 3) + (blockIndex / 3))[(i % 3) + (blockIndex % 3)];
+                // System.out.println("a"); // to make sure it's not infinitely looping
             }
             for (int cell : block) {
                 if (valueBank[cell] == 1 && cell != 0)
@@ -153,7 +162,6 @@ public class Main
             for (int value : valueBank)
                 valueBank[value] = 0;
         }
-
         return validity;
     }
 
