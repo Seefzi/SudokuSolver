@@ -45,12 +45,12 @@ public class Main
     {
          // stores input from user to be turned into a sudoku line
         int[][] newBoard = new int[9][9]; // [row][column]
-        boolean validity = true;
-        String newLine = "";
+        boolean validity;
+        String newLine;
         System.out.println("Welcome to Sudoku Solver. Please start by entering the first line of the sudoku you would like me to solve. Fill in any blank spaces with 0.");
 
         // iteratorX == row. iteratorY == column.
-        int iteratorX = 0, iteratorY = 0;
+        int iteratorX, iteratorY;
 
         // iterates by row
         for (iteratorX = 0; iteratorX < 9; iteratorX++)
@@ -99,17 +99,21 @@ public class Main
         int[] valueBank = new int[10];
         boolean validity = true;
         int i;
+        int zero;
         for (i = 0; i < 9; i++)
         {
             for (int cell : board.getBoardRow(i))
             {
                 if (cell != 0 && valueBank[cell] == 1)
+                {
+                    System.out.println("Duplicate detected in row " + i + " : " + cell);
                     validity = false;
+                }
                 else
                     valueBank[cell] = 1;
             }
-            for (int value : valueBank)
-                valueBank[value] = 0;
+            for (zero = 0; zero < 10; zero++) // the foreach style loop didn't work, so I replaced it with a regular one
+                valueBank[zero] = 0;
         }
 
         System.out.println(validity);
@@ -121,46 +125,50 @@ public class Main
             for (int cell : board.getBoardColumn(i))
             {
                 if (valueBank[cell] == 1 && cell != 0)
+                {
+                    System.out.println("Duplicate detected in column " + i + " : " + cell);
                     validity = false;
+                }
                 else
                     valueBank[cell] = 1;
             }
             // zero out valueBank for future use
-            for (int value : valueBank)
-                valueBank[value] = 0;
+            for (zero = 0; zero < 10; zero++)
+                valueBank[zero] = 0;
         }
         System.out.println(validity);
 
-        /** Cell Validity Checks **/
-
-        /**
-         * this one was trickier
-         * first for loop determines which block out of 9 total,
-         * second for loop gets the values in the specified 3x3 block (I hope...),
-         * third for loop uses valueBank to check for duplicates that aren't 0,
-         * final for loop resets valueBank for the next pass
-        **/
+        /** Block Validity Checks **/
 
         int[] block = new int[9]; // this stores the 3x3 block to be checked
-        i = 0;
-        // it's getting stuck here somewhere
-        for (int blockIndex = 0; blockIndex < 9; blockIndex++) {
+        int offsetX, offsetY, x, y;
 
-            for (i = 0; i < 9; i++) {
-                // I need 3 values per row for 3 rows at a time
-                // 0-2 = row 0, 3-5 = row 1, 6-8 = row 2
-                // block 0, 1, 2 = row 0
-                block[i] = board.getBoardRow((i / 3) + (blockIndex / 3))[(i % 3) + (blockIndex % 3)];
-                // System.out.println("a"); // to make sure it's not infinitely looping
+        for (int blockIndex = 0; blockIndex < 9; blockIndex++) {
+            // simplified and fixed
+            // offsets are used instead of weird math as indices which fixed the problem
+            i = 0; // I'm sure there's a way to do this without this floating variable here or the double for loops, but it works so oh well
+            offsetX = 3 * (blockIndex % 3);
+            offsetY = 3 * (blockIndex / 3);
+            for (x = 0; x < 3; x++)
+            {
+                for (y = 0; y < 3; y++)
+                {
+                    block[i] = board.getBoardRow(x + offsetX)[y + offsetY];
+                    i++;
+                }
             }
             for (int cell : block) {
                 if (valueBank[cell] == 1 && cell != 0)
+                {
                     validity = false;
+                    System.out.println("Duplicate detected in block " + blockIndex + ": " + cell);
+                }
                 else
                     valueBank[cell] = 1;
             }
-            for (int value : valueBank)
-                valueBank[value] = 0;
+            for (zero = 0; zero < 10; zero++)
+                valueBank[zero] = 0;
+
         }
         return validity;
     }
