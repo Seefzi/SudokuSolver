@@ -1,3 +1,5 @@
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Scanner;
 import static java.lang.System.exit;
 public class Main
@@ -41,12 +43,13 @@ public class Main
         }
 
     }
-    private static int[][] InitializeSudoku()
+    private static int[][] InitializeSudokuFromUserInput()
     {
          // stores input from user to be turned into a sudoku line
         int[][] newBoard = new int[9][9]; // [row][column]
         boolean validity;
         String newLine;
+        Scanner input = new Scanner(System.in);
         System.out.println("Welcome to Sudoku Solver. Please start by entering the first line of the sudoku you would like me to solve. Fill in any blank spaces with 0.");
 
         // iteratorX == row. iteratorY == column.
@@ -58,7 +61,6 @@ public class Main
             do {
                 // I thought it was Java screwing me, turns out it was secretly working fine! ugh. Added this println to demonstrate that it's working.
                 System.out.println("Line " + (iteratorX + 1) + ":");
-                Scanner input = new Scanner(System.in);
                 newLine = input.nextLine();
                 validity = true;
 
@@ -75,6 +77,54 @@ public class Main
                     newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
                 }
             } while (!validity); // if validity is false, loop will repeat.
+        }
+
+        return newBoard;
+    }
+
+    private static int[][] InitializeSudokuFromFile(File f)
+    {
+        int[][] newBoard = new int[9][9]; // [row][column]
+        boolean validity;
+        String newLine;
+        Scanner input;
+        try {
+            input = new Scanner(f);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("Test file found. Reading...");
+
+        // iteratorX == row. iteratorY == column.
+        int iteratorX, iteratorY;
+
+        // iterates by row
+        for (iteratorX = 0; iteratorX < 9; iteratorX++)
+        {
+            newLine = input.nextLine();
+            validity = true;
+            System.out.println("Line " + (iteratorX + 1) + ": " + newLine);
+
+            // prevents out of bounds exceptions by checking length validity.
+            if (newLine.length() != 9)
+            {
+                System.out.println("Error, input was different from expected length.");
+                validity = false;
+            }
+
+            if (!validity)
+            {
+                System.out.println("Check your test file, there is a problem.");
+                exit(2);
+            }
+
+            // iterates column within upper row. since I need the extra dimension, foreach won't work here.
+            for (iteratorY = 0; iteratorY < 9; iteratorY++)
+            {
+                newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
+            }
+
+
         }
 
         return newBoard;
@@ -116,7 +166,7 @@ public class Main
                 valueBank[zero] = 0;
         }
 
-        System.out.println(validity);
+        System.out.println("Valid Rows?: " + validity);
 
         /** Column Validity Checks **/
 
@@ -136,7 +186,7 @@ public class Main
             for (zero = 0; zero < 10; zero++)
                 valueBank[zero] = 0;
         }
-        System.out.println(validity);
+        System.out.println("Valid Columns?: " + validity);
 
         /** Block Validity Checks **/
 
@@ -170,6 +220,7 @@ public class Main
                 valueBank[zero] = 0;
 
         }
+        System.out.println("Valid Blocks?: " + validity);
         return validity;
     }
 
@@ -189,7 +240,11 @@ public class Main
     public static void main(String[] args)
     {
         Sudoku sudoku = new Sudoku();
-        sudoku.setBoard(InitializeSudoku());
+        File f = new File("test_sudoku.txt");
+        if(f.exists() && !f.isDirectory())
+            sudoku.setBoard(InitializeSudokuFromFile(f));
+        else
+            sudoku.setBoard(InitializeSudokuFromUserInput());
 
         if (!Validator(sudoku))
         {
