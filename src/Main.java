@@ -1,13 +1,13 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Scanner;
 import static java.lang.System.exit;
 public class Main
 {
     // Overarching Sudoku type
-    // all of my experience is with C, C++ and C# so hopefully this works
-    // it wasn't working unless I made it static for some reason. Good thing I only need 1 I guess??
-    private static class Sudoku
+    // I fixed the issue with static and nonstatic references
+    private class Sudoku
     {
         private int[][] board;     /** This is the puzzle as input by the user. **/
         private int[][] solution;  /** This is the puzzle solution. **/
@@ -15,31 +15,49 @@ public class Main
         // Class constructor, setters and getters below.
         public Sudoku()
         {
-            board = new int[9][9];
-            solution = new int[9][9];
+            this.board = new int[9][9];
+            this.solution = new int[9][9];
         }
         public void setBoard(int[][] input)
         {
-            board = input;
+            this.board = input;
         }
         public void setSolution(int[][] solved)
         {
-            solution = solved;
+            this.solution = solved;
         }
+        public int[][] getBoard() { return this.board; }
         public int[] getBoardRow(int rowIndex)
         {
-            return board[rowIndex];
+            return this.board[rowIndex];
         }
         public int[] getBoardColumn(int colIndex)
         {
             int[] currentCol = new int[9];
             for (int i = 0; i < 9; i++)
-                currentCol[i] = board[i][colIndex];
+                currentCol[i] = this.board[i][colIndex];
             return currentCol;
+        }
+        public int[] getBoardBlock(int blockIndex)
+        {
+            int[] block = new int[9];
+            int offsetX = 3 * (blockIndex % 3);
+            int offsetY = 3 * (blockIndex / 3);
+            int i = 0, x, y;
+            for (x = 0; x < 3; x++)
+            {
+                for (y = 0; y < 3; y++)
+                {
+                    block[i] = this.getBoardRow(x + offsetX)[y + offsetY];
+                    i++;
+                }
+            }
+
+            return block;
         }
         public int[][] getSolution()
         {
-            return solution;
+            return this.solution;
         }
 
     }
@@ -196,17 +214,7 @@ public class Main
         for (int blockIndex = 0; blockIndex < 9; blockIndex++) {
             // simplified and fixed
             // offsets are used instead of weird math as indices which fixed the problem
-            i = 0; // I'm sure there's a way to do this without this floating variable here or the double for loops, but it works so oh well
-            offsetX = 3 * (blockIndex % 3);
-            offsetY = 3 * (blockIndex / 3);
-            for (x = 0; x < 3; x++)
-            {
-                for (y = 0; y < 3; y++)
-                {
-                    block[i] = board.getBoardRow(x + offsetX)[y + offsetY];
-                    i++;
-                }
-            }
+            block = board.getBoardBlock(blockIndex);
             for (int cell : block) {
                 if (valueBank[cell] == 1 && cell != 0)
                 {
@@ -224,20 +232,123 @@ public class Main
         return validity;
     }
 
-    private static int[][] SolutionFinder(Sudoku sudoku)
+    private static void SolutionFinder(Sudoku sudoku)
     {
         System.out.println("Beginning solving algorithm...");
-        // todo: use iterative steps to find solution. More methods may be needed.
+        boolean done = false;
+        // todo: change the code below to assign a value when only one spot for a number exists
         /**
          *  Creative use of Sudoku's rules are the best way to solve Sudokus. For example,
          *  if 3 is found in 2 columns within a 3x9 column, 3 in the remaining 3x3 block
          *  must be in the final column. Beware: not all Sudokus are solvable, as a lack
          *  of information creates multiple possible solutions which is invalid as a puzzle.
         **/
-        return new int[9][9];
+
+        // sorry
+        // blocks, then rows, then columns, then repeat
+        // use idk how many arrays, zero them out between uses
+
+        int[][] solution = sudoku.getBoard();
+        int[] focus;
+        int[] unusedValues = {1,1,1,1,1,1,1,1,1,1};
+        int[][][] possible = new int[9][9][10];
+        int x, y, z;
+        while (!done)
+        {
+            done = true;
+            for (x = 0; x < 9; x++) // Gets possible values per block
+            {
+                focus = sudoku.getBoardBlock(x); // Get the current working block
+                for (y = 0; y < 9; y++) // Get and exclude the current known values
+                {
+                    if (focus[y] != 0)
+                        unusedValues[focus[y]] = 0;
+                }
+                for (y = 0; y < 9; y++) // Remaining values labeled possible
+                {
+                    if (focus[y] == 0)
+                        possible[x][y] = unusedValues; // Might not work if Java handles this as a pointer
+                }
+                for (int i : unusedValues) // Clear unused values
+                    i = 1;
+
+            }
+
+            for (x = 0; x < 9; x++) // Gets possible values per row
+            {
+                focus = sudoku.getBoardRow(x); // Get the current working row
+                for (y = 0; y < 9; y++) // Get and exclude the current known values
+                {
+                    if (focus[y] != 0)
+                        unusedValues[focus[y]] = 0;
+                }
+                for (y = 0; y < 9; y++) // Excluded values removed from list of possible values
+                {
+                    if (focus[y] == 0)
+                        for (z = 1; z < 10; z++)
+                        {
+                            possible[x][y][z] = possible[x][y][z] & unusedValues[z];
+                        }
+                }
+                for (int i : unusedValues) // Clear unused values
+                    i = 1;
+            }
+
+            for (x = 0; x < 9; x++) // Gets possible values per column
+            {
+                focus = sudoku.getBoardRow(x); // Get the current working column
+                for (y = 0; y < 9; y++) // Get and exclude the current known values
+                {
+                    if (focus[y] != 0)
+                        unusedValues[focus[y]] = 0;
+                }
+                for (y = 0; y < 9; y++) // Excluded values removed from list of possible values
+                {
+                    if (focus[y] == 0)
+                        for (z = 1; z < 10; z++)
+                        {
+                            possible[x][y][z] = possible[x][y][z] & unusedValues[z];
+                        }
+                }
+                for (int i : unusedValues) // Clear unused values
+                    i = 1;
+            }
+
+
+
+            for (x = 0; x < 9; x++)
+                for (y = 0; y < 9; y++)
+                {
+                    for (z = 1; z < 10; z++)
+                    {
+                        if (possible[x][y][z] == 1 && possible[x][y][0] == 0)
+                            possible[x][y][0] = z;
+                        else if (possible[x][y][z] == 1)
+                            possible[x][y][0] = 0;
+                    }
+                    if (possible[x][y][0] != 0)
+                        solution[x][y] = possible[x][y][0];
+
+                }
+
+            for (x = 0; x < 9; x++)
+            {
+                focus = sudoku.getBoardRow(x);
+                for (y = 0; y < 9; y++)
+                {
+                    if (focus[y] == 0)
+                        done = false;
+                }
+
+            }
+
+        }
+
+
+        sudoku.setSolution(solution);
     }
 
-    public static void main(String[] args)
+    private void sequence()
     {
         Sudoku sudoku = new Sudoku();
         File f = new File("test_sudoku.txt");
@@ -254,8 +365,12 @@ public class Main
         else
             System.out.println("The Sudoku is syntactically sound.");
 
-        sudoku.setSolution(SolutionFinder(sudoku));
+        SolutionFinder(sudoku);
+    }
 
-
+    public static void main(String[] args)
+    {
+        Main program = new Main();
+        program.sequence();
     }
 }
