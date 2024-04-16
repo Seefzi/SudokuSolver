@@ -1,6 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 import static java.lang.System.exit;
 public class Main
@@ -61,6 +61,11 @@ public class Main
         }
 
     }
+
+    private static void ShowSolution(Sudoku sudoku) {
+        // Method should display
+    }
+
     private static int[][] InitializeSudokuFromUserInput()
     {
          // stores input from user to be turned into a sudoku line
@@ -236,23 +241,16 @@ public class Main
     {
         System.out.println("Beginning solving algorithm...");
         boolean done = false;
-        // todo: change the code below to assign a value when only one spot for a number exists
-        /**
-         *  Creative use of Sudoku's rules are the best way to solve Sudokus. For example,
-         *  if 3 is found in 2 columns within a 3x9 column, 3 in the remaining 3x3 block
-         *  must be in the final column. Beware: not all Sudokus are solvable, as a lack
-         *  of information creates multiple possible solutions which is invalid as a puzzle.
-        **/
-
-        // sorry
         // blocks, then rows, then columns, then repeat
-        // use idk how many arrays, zero them out between uses
+        // use four arrays, clear as needed
+        // todo: fix it
 
         int[][] solution = sudoku.getBoard();
         int[] focus;
-        int[] unusedValues = {1,1,1,1,1,1,1,1,1,1};
+        int[] unusedValues = new int[10];
         int[][][] possible = new int[9][9][10];
         int x, y, z;
+        Arrays.fill(unusedValues, 1);
         while (!done)
         {
             done = true;
@@ -261,16 +259,20 @@ public class Main
                 focus = sudoku.getBoardBlock(x); // Get the current working block
                 for (y = 0; y < 9; y++) // Get and exclude the current known values
                 {
+                    // if cell in focused block is not 0, mark that value used by setting it to 0
                     if (focus[y] != 0)
                         unusedValues[focus[y]] = 0;
                 }
                 for (y = 0; y < 9; y++) // Remaining values labeled possible
                 {
+                    // if the cell in focused block is 0, mark with all available possible values
                     if (focus[y] == 0)
-                        possible[x][y] = unusedValues; // Might not work if Java handles this as a pointer
+                        // possible[x][y] = unusedValues; // Guess what? It's a pointer (or a reference) :D
+                        for (z = 0; z < possible[x][y].length; z++)
+                            possible[x][y][z] = unusedValues[z];
                 }
-                for (int i : unusedValues) // Clear unused values
-                    i = 1;
+                // Clear unused values
+                Arrays.fill(unusedValues, 1); // thanks intellij
 
             }
 
@@ -290,8 +292,7 @@ public class Main
                             possible[x][y][z] = possible[x][y][z] & unusedValues[z];
                         }
                 }
-                for (int i : unusedValues) // Clear unused values
-                    i = 1;
+                Arrays.fill(unusedValues, 1); // thanks intellij
             }
 
             for (x = 0; x < 9; x++) // Gets possible values per column
@@ -310,8 +311,7 @@ public class Main
                             possible[x][y][z] = possible[x][y][z] & unusedValues[z];
                         }
                 }
-                for (int i : unusedValues) // Clear unused values
-                    i = 1;
+                Arrays.fill(unusedValues, 1); // thanks intellij
             }
 
 
@@ -321,12 +321,16 @@ public class Main
                 {
                     for (z = 1; z < 10; z++)
                     {
+                        // if there is a marked possible value and there is a 0 in the 0 position,
+                        // assign the value to the 0 position.
+                        // otherwise if there was an additional possible value, assign the 0 index to -1.
                         if (possible[x][y][z] == 1 && possible[x][y][0] == 0)
                             possible[x][y][0] = z;
                         else if (possible[x][y][z] == 1)
-                            possible[x][y][0] = 0;
+                            possible[x][y][0] = -1;
                     }
-                    if (possible[x][y][0] != 0)
+                    // if there is one possible value as determined previously, set it.
+                    if (possible[x][y][0] > 0)
                         solution[x][y] = possible[x][y][0];
 
                 }
@@ -346,12 +350,13 @@ public class Main
 
 
         sudoku.setSolution(solution);
+        System.out.println("Solution found.");
     }
 
     private void sequence()
     {
         Sudoku sudoku = new Sudoku();
-        File f = new File("test_sudoku.txt");
+        File f = new File("test_sudoku.txt"); // uses C style file handling but whatever
         if(f.exists() && !f.isDirectory())
             sudoku.setBoard(InitializeSudokuFromFile(f));
         else
@@ -366,6 +371,7 @@ public class Main
             System.out.println("The Sudoku is syntactically sound.");
 
         SolutionFinder(sudoku);
+        ShowSolution(sudoku);
     }
 
     public static void main(String[] args)
