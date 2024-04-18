@@ -3,6 +3,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.Scanner;
 import static java.lang.System.exit;
+
 public class Main
 {
     // Overarching Sudoku type
@@ -12,12 +13,12 @@ public class Main
         private int[][] board;     /** This is the puzzle as input by the user. **/
         private int[][] solution;  /** This is the puzzle solution. **/
 
-        // Class constructor, setters and getters below.
-        public Sudoku()
-        {
-            this.board = new int[9][9];
-            this.solution = new int[9][9];
-        }
+    // Class constructor, setters and getters below.
+    public Sudoku()
+    {
+        this.board = new int[9][9];
+        this.solution = new int[9][9];
+    }
         public void setBoard(int[][] input)
         {
             this.board = input;
@@ -25,6 +26,9 @@ public class Main
         public void setSolution(int[][] solved)
         {
             this.solution = solved;
+        }
+        public void setSolution(int row, int col, int num){
+            this.solution[row][col] = num;
         }
         public int[][] getBoard() { return this.board; }
         public int[] getBoardRow(int rowIndex)
@@ -59,16 +63,39 @@ public class Main
         {
             return this.solution;
         }
+        public int[] getSolutionRow(int rowIndex)
+        {
+            return this.solution[rowIndex];
+        }
+        public int[] getSolutionColumn(int colIndex)
+        {
+            int[] currentCol = new int[9];
+            for (int i = 0; i < 9; i++)
+                currentCol[i] = this.solution[i][colIndex];
+            return currentCol;
+        }
+        public int[] getSolutionBlock(int blockIndex)
+        {
+            int[] block = new int[9];
+            int offsetX = 3 * (blockIndex % 3);
+            int offsetY = 3 * (blockIndex / 3);
+            int i = 0, x, y;
+            for (x = 0; x < 3; x++)
+            {
+                for (y = 0; y < 3; y++)
+                {
+                    block[i] = this.getSolutionRow(x + offsetX)[y + offsetY];
+                    i++;
+                }
+            }
+
+            return block;
+        }
 
     }
-
-    private static void ShowSolution(Sudoku sudoku) {
-        // Method should display
-    }
-
     private static int[][] InitializeSudokuFromUserInput()
     {
-         // stores input from user to be turned into a sudoku line
+        // stores input from user to be turned into a sudoku line
         int[][] newBoard = new int[9][9]; // [row][column]
         boolean validity;
         String newLine;
@@ -165,31 +192,27 @@ public class Main
         // Use valueBank to store previous values and check against valueBank to determine validity.
         // valueBank's index of 0 can equal 1 and still be valid!
 
-        System.out.println("Checking Sudoku's syntactic validity...");
+        System.out.println("Checking Sudoku's validity...");
 
         /** Row Validity Checks **/
 
         int[] valueBank = new int[10];
         boolean validity = true;
         int i;
-        int zero;
         for (i = 0; i < 9; i++)
         {
             for (int cell : board.getBoardRow(i))
             {
                 if (cell != 0 && valueBank[cell] == 1)
                 {
-                    System.out.println("Duplicate detected in row " + i + " : " + cell);
+                    System.out.println("ROW CHECK FAILED: Duplicate detected in row " + i + " : " + cell);
                     validity = false;
                 }
                 else
                     valueBank[cell] = 1;
             }
-            for (zero = 0; zero < 10; zero++) // the foreach style loop didn't work, so I replaced it with a regular one
-                valueBank[zero] = 0;
+            Arrays.fill(valueBank, 0);
         }
-
-        System.out.println("Valid Rows?: " + validity);
 
         /** Column Validity Checks **/
 
@@ -199,22 +222,18 @@ public class Main
             {
                 if (valueBank[cell] == 1 && cell != 0)
                 {
-                    System.out.println("Duplicate detected in column " + i + " : " + cell);
+                    System.out.println("COLUMN CHECK FAILED: Duplicate detected in column " + i + " : " + cell);
                     validity = false;
                 }
                 else
                     valueBank[cell] = 1;
             }
-            // zero out valueBank for future use
-            for (zero = 0; zero < 10; zero++)
-                valueBank[zero] = 0;
+            Arrays.fill(valueBank, 0);
         }
-        System.out.println("Valid Columns?: " + validity);
 
         /** Block Validity Checks **/
 
-        int[] block = new int[9]; // this stores the 3x3 block to be checked
-        int offsetX, offsetY, x, y;
+        int[] block; // this stores the 3x3 block to be checked
 
         for (int blockIndex = 0; blockIndex < 9; blockIndex++) {
             // simplified and fixed
@@ -224,139 +243,114 @@ public class Main
                 if (valueBank[cell] == 1 && cell != 0)
                 {
                     validity = false;
-                    System.out.println("Duplicate detected in block " + blockIndex + ": " + cell);
+                    System.out.println("BLOCK CHECK FAILED: Duplicate detected in block " + blockIndex + ": " + cell);
                 }
                 else
                     valueBank[cell] = 1;
             }
-            for (zero = 0; zero < 10; zero++)
-                valueBank[zero] = 0;
+            Arrays.fill(valueBank, 0);
 
         }
-        System.out.println("Valid Blocks?: " + validity);
         return validity;
     }
 
-    private static void SolutionFinder(Sudoku sudoku)
+    private static boolean SolutionFinder(Sudoku sudoku)
     {
         System.out.println("Beginning solving algorithm...");
-        boolean done = false;
-        // blocks, then rows, then columns, then repeat
-        // use four arrays, clear as needed
-        // todo: fix it
 
-        int[][] solution = sudoku.getBoard();
-        int[] focus;
-        int[] unusedValues = new int[10];
-        int[][][] possible = new int[9][9][10];
-        int x, y, z;
-        Arrays.fill(unusedValues, 1);
-        while (!done)
-        {
-            done = true;
-            for (x = 0; x < 9; x++) // Gets possible values per block
-            {
-                focus = sudoku.getBoardBlock(x); // Get the current working block
-                for (y = 0; y < 9; y++) // Get and exclude the current known values
-                {
-                    // if cell in focused block is not 0, mark that value used by setting it to 0
-                    if (focus[y] != 0)
-                        unusedValues[focus[y]] = 0;
-                }
-                for (y = 0; y < 9; y++) // Remaining values labeled possible
-                {
-                    // if the cell in focused block is 0, mark with all available possible values
-                    if (focus[y] == 0)
-                        // possible[x][y] = unusedValues; // Guess what? It's a pointer (or a reference) :D
-                        for (z = 0; z < possible[x][y].length; z++)
-                            possible[x][y][z] = unusedValues[z];
-                }
-                // Clear unused values
-                Arrays.fill(unusedValues, 1); // thanks intellij
-
-            }
-
-            for (x = 0; x < 9; x++) // Gets possible values per row
-            {
-                focus = sudoku.getBoardRow(x); // Get the current working row
-                for (y = 0; y < 9; y++) // Get and exclude the current known values
-                {
-                    if (focus[y] != 0)
-                        unusedValues[focus[y]] = 0;
-                }
-                for (y = 0; y < 9; y++) // Excluded values removed from list of possible values
-                {
-                    if (focus[y] == 0)
-                        for (z = 1; z < 10; z++)
-                        {
-                            possible[x][y][z] = possible[x][y][z] & unusedValues[z];
-                        }
-                }
-                Arrays.fill(unusedValues, 1); // thanks intellij
-            }
-
-            for (x = 0; x < 9; x++) // Gets possible values per column
-            {
-                focus = sudoku.getBoardRow(x); // Get the current working column
-                for (y = 0; y < 9; y++) // Get and exclude the current known values
-                {
-                    if (focus[y] != 0)
-                        unusedValues[focus[y]] = 0;
-                }
-                for (y = 0; y < 9; y++) // Excluded values removed from list of possible values
-                {
-                    if (focus[y] == 0)
-                        for (z = 1; z < 10; z++)
-                        {
-                            possible[x][y][z] = possible[x][y][z] & unusedValues[z];
-                        }
-                }
-                Arrays.fill(unusedValues, 1); // thanks intellij
-            }
-
-
-
-            for (x = 0; x < 9; x++)
-                for (y = 0; y < 9; y++)
-                {
-                    for (z = 1; z < 10; z++)
-                    {
-                        // if there is a marked possible value and there is a 0 in the 0 position,
-                        // assign the value to the 0 position.
-                        // otherwise if there was an additional possible value, assign the 0 index to -1.
-                        if (possible[x][y][z] == 1 && possible[x][y][0] == 0)
-                            possible[x][y][0] = z;
-                        else if (possible[x][y][z] == 1)
-                            possible[x][y][0] = -1;
-                    }
-                    // if there is one possible value as determined previously, set it.
-                    if (possible[x][y][0] > 0)
-                        solution[x][y] = possible[x][y][0];
-
-                }
-
-            for (x = 0; x < 9; x++)
-            {
-                focus = sudoku.getBoardRow(x);
-                for (y = 0; y < 9; y++)
-                {
-                    if (focus[y] == 0)
-                        done = false;
-                }
-
-            }
-
+        // Check if initial board is valid
+        if(!Validator(sudoku)) {
+            return false;
         }
 
+        // Traverse board and find empty cells
+        int[] emptyCell = findEmptyCell(sudoku); // finds a single cell per call
+        if (emptyCell == null) {    // No empty cells
+            return true;            // Puzzle solved
+        }
 
-        sudoku.setSolution(solution);
-        System.out.println("Solution found.");
+        // Fill the empty cell 1-9
+        int row = emptyCell[0];
+        int col = emptyCell[1];
+
+        for (int number = 1; number <= 9; number++) {
+            // Validate each possibility
+            if (isPlacementValid(sudoku, number, row, col)) {
+                // If number is valid, assign it to cell
+                sudoku.setSolution(row, col, number);
+
+                // Repeat process using recursion
+                if (SolutionFinder(sudoku)) {
+                    return true; // Puzzle solved
+                }
+                else {
+                    // Backtrack if necessary and clear out placement
+                    sudoku.getBoard()[row][col] = 0;
+                }
+            }
+        }
+
+        // Backtrack
+        return false;
+    }
+
+    // Find an empty cell in the grid
+    private static int[] findEmptyCell(Sudoku sudoku) {
+        int[][] board = sudoku.getSolution();
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if(board[i][j] == 0) {          // If cell is empty
+                    return new int[]{i, j};     // Return row and column of cell
+                }
+            }
+        }
+        return null;
+    }
+
+    // Check if placement is valid
+    private static boolean isPlacementValid(Sudoku sudoku, int number, int row, int col) {
+        return !isNumberInRow(sudoku, number, row) &&
+                !isNumberInColumn(sudoku, number, col) &&
+                !isNumberInBlock(sudoku, number, row, col);
+    }
+
+    // Check if number is in row
+    private static boolean isNumberInRow(Sudoku sudoku, int number, int row) {
+        int[] boardRow = sudoku.getSolutionRow(row);
+        for (int cell: boardRow) {
+            if (cell == number) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Check if number is in column
+    private static boolean isNumberInColumn(Sudoku sudoku, int number, int col) {
+        int[] boardCol = sudoku.getSolutionColumn(col);
+        for (int cell: boardCol) {
+            if (cell == number) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Check if number is in block
+    private static boolean isNumberInBlock(Sudoku sudoku, int number, int row, int col) {
+        int[] boardBlock = sudoku.getSolutionBlock((row / 3) * 3 + (col / 3));
+        for (int cell: boardBlock) {
+            if (cell == number) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void sequence()
     {
         Sudoku sudoku = new Sudoku();
-        File f = new File("test_sudoku.txt"); // uses C style file handling but whatever
+        File f = new File("test_sudoku.txt");
         if(f.exists() && !f.isDirectory())
             sudoku.setBoard(InitializeSudokuFromFile(f));
         else
@@ -370,8 +364,32 @@ public class Main
         else
             System.out.println("The Sudoku is syntactically sound.");
 
-        SolutionFinder(sudoku);
-        ShowSolution(sudoku);
+        sudoku.setSolution(sudoku.getBoard());
+
+        if (SolutionFinder(sudoku)) {
+            System.out.println("The Sudoku has been solved successfully!");
+        }
+        else {
+            System.out.println("The Sudoku is unsolvable. Exiting...");
+            exit(1);
+        }
+
+        printSudoku(sudoku);
+    }
+
+    private static void printSudoku(Sudoku sudoku) {
+        for (int row = 0; row < 9; row++) {
+            if (row % 3 == 0 && row != 0) {
+                System.out.print("-----------");
+            }
+            for (int col = 0; col < 9; col++) {
+                if (col % 3 == 0 && col != 0) {
+                    System.out.print("|");
+                }
+                System.out.print(sudoku.getBoard()[row][col]);
+            }
+            System.out.println();
+        }
     }
 
     public static void main(String[] args)
