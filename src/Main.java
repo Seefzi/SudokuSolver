@@ -262,7 +262,6 @@ public class Main
     {
         // System.out.println("Generative Recursion");
 
-        //todo: get rid of recursion
         int iteration = 0;
         boolean success = false;
         while (true) {
