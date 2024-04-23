@@ -21,14 +21,6 @@ public class Main
         this.solution = new int[9][9];
         this.visited = new boolean[9][9];
     }
-        public void setBoard(int[][] input)
-        {
-            this.board = input;
-        }
-        public void setSolution(int[][] solved)
-        {
-            this.solution = solved;
-        }
         public void setSolution(int row, int col, int num){
             this.solution[row][col] = num;
         }
@@ -565,7 +557,6 @@ public class Main
         }
         else {
             System.out.println("The Sudoku is syntactically sound.");
-            printSudoku(sudoku);
         }
 
         for (int i = 0; i < sudoku.getBoard().length; i++) {
