@@ -1,9 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+
 import static java.lang.System.exit;
 
 public class Main
@@ -112,25 +110,29 @@ public class Main
         // iterates by row
         for (iteratorX = 0; iteratorX < 9; iteratorX++)
         {
-            do {
-                // I thought it was Java screwing me, turns out it was secretly working fine! ugh. Added this println to demonstrate that it's working.
-                System.out.println("Line " + (iteratorX + 1) + ":");
-                newLine = input.nextLine();
-                validity = true;
+            newLine = input.nextLine();
+            validity = true;
+            System.out.println("Line " + (iteratorX + 1) + ": " + newLine);
 
-                // prevents out of bounds exceptions by checking length validity.
-                if (newLine.length() != 9)
-                {
-                    System.out.println("Error, input was below expected length. Remember, Sudokus are 9x9. Please try again:");
-                    validity = false;
-                }
+            // prevents out of bounds exceptions by checking length validity.
+            if (newLine.length() != 9)
+            {
+                System.out.println("Error, input was different from expected length. Try again.");
+                validity = false;
+            }
 
-                // iterates column within upper row. since I need the extra dimension, foreach won't work here.
-                for (iteratorY = 0; iteratorY < 9 && validity; iteratorY++)
-                {
-                    newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
-                }
-            } while (!validity); // if validity is false, loop will repeat.
+            if (!validity)
+            {
+                iteratorX--;
+            }
+
+            // iterates column within upper row. since I need the extra dimension, foreach won't work here.
+            for (iteratorY = 0; iteratorY < 9 && validity; iteratorY++)
+            {
+                newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
+            }
+
+
         }
 
         return newBoard;
@@ -147,7 +149,7 @@ public class Main
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Test file found. Reading...");
+        System.out.println("Reading into array...");
 
         // iteratorX == row. iteratorY == column.
         int iteratorX, iteratorY;
@@ -168,7 +170,7 @@ public class Main
 
             if (!validity)
             {
-                System.out.println("Check your test file, there is a problem.");
+                System.out.println("Check your file, there is a problem.");
                 exit(2);
             }
 
@@ -263,13 +265,19 @@ public class Main
         // System.out.println("Generative Recursion");
 
         int iteration = 0;
-        boolean success = false;
+        int sinceLastPlacement = 0;
         while (true) {
+            if (sinceLastPlacement > 162) {
+                printSudoku(sudoku);
+                System.out.println("Timeout: No placement in 162 attempts");
+                return false;
+            }
+
             iteration++;
+
             // Traverse board and find empty cells
             int[] emptyCell = findEmptyCell(sudoku); // finds a single cell per call
             if (emptyCell == null) {    // No empty cells left
-                success = true;
                 break;// Puzzle solved
             }
 
@@ -313,6 +321,11 @@ public class Main
                 }
 
             }
+
+            if (sudoku.getSolution()[row][col] == 0)
+                sinceLastPlacement++;
+            else
+                sinceLastPlacement = 0;
         }
         // DO NOT repeat process using recursion
         printSudoku(sudoku);
@@ -439,16 +452,18 @@ public class Main
     private static int[] findEmptyCell(Sudoku sudoku) {
         int[][] board = sudoku.getSolution();
         boolean reset = true;
-        for (int i = 0; i < 9; i++) // I added this so it doesn't check the same cell over and over and I'm too stressed to explain how it works right now :)
-        {
-            for (int j = 0; j < 9; j++)
-            {
-                if (board[i][j] == 0 && !sudoku.visited[i][j])
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (board[i][j] == 0 && !sudoku.visited[i][j]) {
                     reset = false;
+                    break;
+                }
+            }
+            if (!reset) {
+                break;
             }
         }
-        if (reset)
-        {
+        if (reset) {
             for (boolean[] row : sudoku.visited)
                 Arrays.fill(row, false);
         }
@@ -462,6 +477,7 @@ public class Main
         }
         return null;
     }
+
 
     // Check if placement is valid
     private static boolean isPlacementValid(Sudoku sudoku, int number, int row, int col) {
@@ -505,14 +521,40 @@ public class Main
 
     private void sequence() {
         File f = new File("test_sudoku.txt");
-        Sudoku sudoku;
+        Sudoku sudoku = null;
+        Scanner s = new Scanner(System.in);
 
-        // Check if file exits
-        if(f.exists() && !f.isDirectory()) {
-            sudoku = new Sudoku(InitializeSudokuFromFile(f));
-        } else {
-            // Otherwise take user input
-            sudoku = new Sudoku(InitializeSudokuFromUserInput());
+        System.out.println("Welcome to Sudoku Solver. How would you like to input your puzzle?");
+        System.out.println("1: Manual input");
+        if (f.exists() && !f.isDirectory())
+            System.out.println("2: File input (test_sudoku.txt)");
+
+        String input = s.nextLine();
+
+        switch (input.charAt(0)){
+            case '1':
+                sudoku = new Sudoku(InitializeSudokuFromUserInput());
+                break;
+            case '2':
+                // Check if file exits
+                if(f.exists() && !f.isDirectory()) {
+                    sudoku = new Sudoku(InitializeSudokuFromFile(f));
+                } else {
+                    // Otherwise take user input
+                    System.out.println("No file found. Defaulting to manual input...");
+                    sudoku = new Sudoku(InitializeSudokuFromUserInput());
+                }
+                break;
+            case 'q':
+            case 'Q':
+                System.out.println("Exiting...");
+                exit(0);
+        }
+
+        if (sudoku == null)
+        {
+            System.out.println("Sudoku object is null. Exiting...");
+            exit(1);
         }
 
         // Check if board is valid
@@ -521,8 +563,10 @@ public class Main
             System.out.println("The Sudoku provided wasn't valid. Exiting...");
             exit(1);
         }
-        else
+        else {
             System.out.println("The Sudoku is syntactically sound.");
+            printSudoku(sudoku);
+        }
 
         for (int i = 0; i < sudoku.getBoard().length; i++) {
             for (int j = 0; j < sudoku.getBoard()[i].length; j++) {
@@ -536,21 +580,45 @@ public class Main
             System.out.println("The Sudoku has been solved successfully!");
         }
         else {
-            System.out.println("The Sudoku is unsolvable. Exiting...");
-            exit(1);
+            System.out.println("The Sudoku is unsolvable. Womp womp.");
+        }
+
+        System.out.println("Would you like to input another puzzle? Y/N");
+        input = s.nextLine();
+        switch (input.charAt(0))
+        {
+            case 'y':
+            case 'Y':
+               sequence();
+               break;
+            case 'n':
+            case 'N':
+                System.out.println("Exiting...");
+                exit(0);
         }
     }
 
     private static void printSudoku(Sudoku sudoku) {
-        for (int row = 0; row < 9; row++) {
-            if (row % 3 == 0 && row != 0) {
-                System.out.print("-----------");
+//        for (int row = 0; row < 9; row++) {
+//            if (row % 3 == 0 && row != 0) {
+//                System.out.print("-----------");
+//            }
+//            for (int col = 0; col < 9; col++) {
+//                if (col % 3 == 0 && col != 0) {
+//                    System.out.print("|");
+//                }
+//                System.out.print(sudoku.getSolution()[row][col]);
+//            }
+//            System.out.println();
+//        }
+
+        for (int i = 0; i < sudoku.getBoard().length; i++) {
+            for (int j = 0; j < sudoku.getBoard()[i].length; j++) {
+                System.out.print(sudoku.getBoard()[i][j] + "  ");
             }
-            for (int col = 0; col < 9; col++) {
-                if (col % 3 == 0 && col != 0) {
-                    System.out.print("|");
-                }
-                System.out.print(sudoku.getSolution()[row][col]);
+            System.out.print("  ->    ");
+            for (int j = 0; j < sudoku.getSolution()[i].length; j++) {
+                System.out.print(sudoku.getSolution()[i][j] + "  ");
             }
             System.out.println();
         }
