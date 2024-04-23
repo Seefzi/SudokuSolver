@@ -49,8 +49,8 @@ public class Main
         public int[] getBoardBlock(int blockIndex)
         {
             int[] block = new int[9];
-            int offsetX = 3 * (blockIndex % 3);
-            int offsetY = 3 * (blockIndex / 3);
+            int offsetX = 3 * (blockIndex / 3);
+            int offsetY = 3 * (blockIndex % 3);
             int i = 0, x, y;
             for (x = 0; x < 3; x++)
             {
@@ -81,8 +81,8 @@ public class Main
         public int[] getSolutionBlock(int blockIndex)
         {
             int[] block = new int[9];
-            int offsetX = 3 * (blockIndex % 3);
-            int offsetY = 3 * (blockIndex / 3);
+            int offsetX = 3 * (blockIndex / 3);
+            int offsetY = 3 * (blockIndex % 3);
             int i = 0, x, y;
             for (x = 0; x < 3; x++)
             {
@@ -261,49 +261,67 @@ public class Main
     private static boolean SolutionFinder(Sudoku sudoku)
     {
         // System.out.println("Generative Recursion");
-        // Traverse board and find empty cells
-        int[] emptyCell = findEmptyCell(sudoku); // finds a single cell per call
-        if (emptyCell == null) {    // No empty cells left
-            return true;            // Puzzle solved
-        }
 
-        // Fill the empty cell with the only possible number
-        int row = emptyCell[0];
-        int col = emptyCell[1];
-        int[] possibleNumbers = getPossibleNumbers(sudoku, row, col);
-        int[] uniqueValuesInBlock = getUniqueValuesInBlock(sudoku, row, col);
-
-
-
-        if (possibleNumbers.length == 1) {// If there is one possibility for the cell // for (int number : possibleNumbers) {
-            // Validate each possibility
-            if (isPlacementValid(sudoku, possibleNumbers[0], row, col)) {
-                // If number is valid, assign it to cell
-                sudoku.setSolution(row, col, possibleNumbers[0]);
-
-
+        //todo: get rid of recursion
+        int iteration = 0;
+        boolean success = false;
+        while (true) {
+            iteration++;
+            // Traverse board and find empty cells
+            int[] emptyCell = findEmptyCell(sudoku); // finds a single cell per call
+            if (emptyCell == null) {    // No empty cells left
+                success = true;
+                break;// Puzzle solved
             }
-        }
-        else {
-            for (int j : uniqueValuesInBlock) {
-                if (isPlacementValid(sudoku, j, row, col) && Arrays.binarySearch(possibleNumbers, j) > 0) {
-                    sudoku.setSolution(row, col, j);
+
+            // Fill the empty cell with the only possible number
+            int row = emptyCell[0];
+            int col = emptyCell[1];
+            int[] possibleNumbers = getPossibleNumbers(sudoku, row, col);
+            if (possibleNumbers.length == 0)
+            {
+                System.out.println("Error: No possible values for " + row + ", " + col + " on iteration " + iteration);
+                return false;
+            }
+            int[] uniqueValuesInBlock = getUniqueValuesInBlock(sudoku, row, col);
+            int[] uniqueValuesInRow = getUniqueValuesInRow(sudoku, row, col);
+            int[] uniqueValuesInCol = getUniqueValuesInCol(sudoku, row, col);
+
+
+            if (possibleNumbers.length == 1) {// If there is one possibility for the cell // for (int number : possibleNumbers) {
+                // Validate each possibility
+                if (isPlacementValid(sudoku, possibleNumbers[0], row, col)) {
+                    // If number is valid, assign it to cell
+                    sudoku.setSolution(row, col, possibleNumbers[0]);
+
+
                 }
+            } else { // these check the case that there is no other cell for a given value
+                for (int j : uniqueValuesInBlock) {
+                    if (isPlacementValid(sudoku, j, row, col) && Arrays.binarySearch(possibleNumbers, j) > 0) {
+                        sudoku.setSolution(row, col, j);
+                    }
+                }
+                for (int j : uniqueValuesInRow) {
+                    if (isPlacementValid(sudoku, j, row, col) && Arrays.binarySearch(possibleNumbers, j) > 0) {
+                        sudoku.setSolution(row, col, j);
+                    }
+                }
+                for (int j : uniqueValuesInCol) {
+                    if (isPlacementValid(sudoku, j, row, col) && Arrays.binarySearch(possibleNumbers, j) > 0) {
+                        sudoku.setSolution(row, col, j);
+                    }
+                }
+
             }
-
         }
-        // Repeat process using recursion
-        if (SolutionFinder(sudoku)) {
-            printSudoku(sudoku);
-            System.out.println("SOLUTION ALERT!");
-            return true; // Puzzle solved
-        }
-
-        // Backtrack if necessary and clear out placement
-        sudoku.setSolution(row, col, 0);
+        // DO NOT repeat process using recursion
+        printSudoku(sudoku);
+        System.out.println("SOLUTION ALERT!");
+        return true; // Puzzle solved
 
         // Backtrack
-        return false;
+
     }
 
     private static int[] getPossibleNumbers(Sudoku sudoku, int row, int col) {
@@ -355,6 +373,54 @@ public class Main
                 for (int num : possibleNumbers) {
                     count[num]++;
                 }
+            }
+        }
+
+        // gets numbers that only appear once in the block
+        int[] uniqueValues = new int[9];
+        int index = 0;
+        for (int num = 1; num <= 9; num++) {
+            if (count[num] == 1) {
+                uniqueValues[index++] = num;
+            }
+        }
+        // returns without extra 0s
+        return Arrays.copyOf(uniqueValues, index);
+    }
+
+    private static int[] getUniqueValuesInRow(Sudoku sudoku, int row, int col) {
+
+        int[] count = new int[10]; // Index 0 is not used
+
+        // Iterate over the row
+        for (int i = 0; i < 9; i++) {
+                int[] possibleNumbers = getPossibleNumbers(sudoku, row, i);
+                for (int num : possibleNumbers) {
+                    count[num]++;
+                }
+        }
+
+        // gets numbers that only appear once in the block
+        int[] uniqueValues = new int[9];
+        int index = 0;
+        for (int num = 1; num <= 9; num++) {
+            if (count[num] == 1) {
+                uniqueValues[index++] = num;
+            }
+        }
+        // returns without extra 0s
+        return Arrays.copyOf(uniqueValues, index);
+    }
+
+    private static int[] getUniqueValuesInCol(Sudoku sudoku, int row, int col) {
+
+        int[] count = new int[10]; // Index 0 is not used
+
+        // Iterate over the row
+        for (int i = 0; i < 9; i++) {
+            int[] possibleNumbers = getPossibleNumbers(sudoku, col, i);
+            for (int num : possibleNumbers) {
+                count[num]++;
             }
         }
 
