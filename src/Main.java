@@ -599,26 +599,16 @@ public class Main
     }
 
     private static void printSudoku(Sudoku sudoku) {
-//        for (int row = 0; row < 9; row++) {
-//            if (row % 3 == 0 && row != 0) {
-//                System.out.print("-----------");
-//            }
-//            for (int col = 0; col < 9; col++) {
-//                if (col % 3 == 0 && col != 0) {
-//                    System.out.print("|");
-//                }
-//                System.out.print(sudoku.getSolution()[row][col]);
-//            }
-//            System.out.println();
-//        }
-
-        for (int i = 0; i < sudoku.getBoard().length; i++) {
-            for (int j = 0; j < sudoku.getBoard()[i].length; j++) {
-                System.out.print(sudoku.getBoard()[i][j] + "  ");
+        int[][] solution = sudoku.getSolution();
+        for (int row = 0; row < 9; row++) {
+            if (row % 3 == 0 && row != 0) {
+                System.out.println("----------------------------");
             }
-            System.out.print("  ->    ");
-            for (int j = 0; j < sudoku.getSolution()[i].length; j++) {
-                System.out.print(sudoku.getSolution()[i][j] + "  ");
+            for (int col = 0; col < 9; col++) {
+                if (col % 3 == 0 && col != 0) {
+                    System.out.print("|");
+                }
+                System.out.print(" " + solution[row][col] + " ");
             }
             System.out.println();
         }
