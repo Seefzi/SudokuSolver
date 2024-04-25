@@ -4,48 +4,49 @@ import java.util.*;
 
 import static java.lang.System.exit;
 
-public class Main
-{
+public class Main {
     // Overarching Sudoku type
     // I fixed the issue with static and nonstatic references
-    private class Sudoku
-    {
-        private int[][] board;     /** This is the puzzle as input by the user. **/
-        private int[][] solution;  /** This is the puzzle solution. **/
+    private static class Sudoku {
+        private int[][] board; // No IntelliJ, it's not final.
+        // This is the initial Sudoku.
+        private int[][] solution;
+        // This is the solution and working array.
         public boolean[][] visited;
 
-    // Class constructor, setters and getters below.
-    public Sudoku(int[][] input)
-    {
-        this.board = input;
-        this.solution = new int[9][9];
-        this.visited = new boolean[9][9];
-    }
-        public void setSolution(int row, int col, int num){
+        // Class constructor, setters and getters below.
+        public Sudoku(int[][] input) {
+            this.board = input;
+            this.solution = new int[9][9];
+            this.visited = new boolean[9][9];
+        }
+
+        public void setSolution(int row, int col, int num) {
             this.solution[row][col] = num;
         }
-        public int[][] getBoard() { return this.board; }
-        public int[] getBoardRow(int rowIndex)
-        {
+
+        public int[][] getBoard() {
+            return this.board;
+        }
+
+        public int[] getBoardRow(int rowIndex) {
             return this.board[rowIndex];
         }
-        public int[] getBoardColumn(int colIndex)
-        {
+
+        public int[] getBoardColumn(int colIndex) {
             int[] currentCol = new int[9];
             for (int i = 0; i < 9; i++)
                 currentCol[i] = this.board[i][colIndex];
             return currentCol;
         }
-        public int[] getBoardBlock(int blockIndex)
-        {
+
+        public int[] getBoardBlock(int blockIndex) {
             int[] block = new int[9];
             int offsetX = 3 * (blockIndex / 3);
             int offsetY = 3 * (blockIndex % 3);
             int i = 0, x, y;
-            for (x = 0; x < 3; x++)
-            {
-                for (y = 0; y < 3; y++)
-                {
+            for (x = 0; x < 3; x++) {
+                for (y = 0; y < 3; y++) {
                     block[i] = this.getBoardRow(x + offsetX)[y + offsetY];
                     i++;
                 }
@@ -53,31 +54,29 @@ public class Main
 
             return block;
         }
-        public int[][] getSolution()
-        {
+
+        public int[][] getSolution() {
             return this.solution;
         }
-        public int[] getSolutionRow(int rowIndex)
-        {
+
+        public int[] getSolutionRow(int rowIndex) {
             return this.solution[rowIndex];
         }
-        public int[] getSolutionColumn(int colIndex)
-        {
+
+        public int[] getSolutionColumn(int colIndex) {
             int[] currentCol = new int[9];
             for (int i = 0; i < 9; i++)
                 currentCol[i] = this.solution[i][colIndex];
             return currentCol;
         }
-        public int[] getSolutionBlock(int blockIndex)
-        {
+
+        public int[] getSolutionBlock(int blockIndex) {
             int[] block = new int[9];
             int offsetX = 3 * (blockIndex / 3);
             int offsetY = 3 * (blockIndex % 3);
             int i = 0, x, y;
-            for (x = 0; x < 3; x++)
-            {
-                for (y = 0; y < 3; y++)
-                {
+            for (x = 0; x < 3; x++) {
+                for (y = 0; y < 3; y++) {
                     block[i] = this.getSolutionRow(x + offsetX)[y + offsetY];
                     i++;
                 }
@@ -87,8 +86,8 @@ public class Main
         }
 
     }
-    private static int[][] InitializeSudokuFromUserInput()
-    {
+
+    private static int[][] InitializeSudokuFromUserInput() {
         // stores input from user to be turned into a sudoku line
         int[][] newBoard = new int[9][9]; // [row][column]
         boolean validity;
@@ -100,27 +99,23 @@ public class Main
         int iteratorX, iteratorY;
 
         // iterates by row
-        for (iteratorX = 0; iteratorX < 9; iteratorX++)
-        {
+        for (iteratorX = 0; iteratorX < 9; iteratorX++) {
             newLine = input.nextLine();
             validity = true;
             System.out.println("Line " + (iteratorX + 1) + ": " + newLine);
 
             // prevents out of bounds exceptions by checking length validity.
-            if (newLine.length() != 9)
-            {
+            if (newLine.length() != 9) {
                 System.out.println("Error, input was different from expected length. Try again.");
                 validity = false;
             }
 
-            if (!validity)
-            {
+            if (!validity) {
                 iteratorX--;
             }
 
             // iterates column within upper row. since I need the extra dimension, foreach won't work here.
-            for (iteratorY = 0; iteratorY < 9 && validity; iteratorY++)
-            {
+            for (iteratorY = 0; iteratorY < 9 && validity; iteratorY++) {
                 newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
             }
 
@@ -130,8 +125,7 @@ public class Main
         return newBoard;
     }
 
-    private static int[][] InitializeSudokuFromFile(File f)
-    {
+    private static int[][] InitializeSudokuFromFile(File f) {
         int[][] newBoard = new int[9][9]; // [row][column]
         boolean validity;
         String newLine;
@@ -147,28 +141,24 @@ public class Main
         int iteratorX, iteratorY;
 
         // iterates by row
-        for (iteratorX = 0; iteratorX < 9; iteratorX++)
-        {
+        for (iteratorX = 0; iteratorX < 9; iteratorX++) {
             newLine = input.nextLine();
             validity = true;
             System.out.println("Line " + (iteratorX + 1) + ": " + newLine);
 
             // prevents out of bounds exceptions by checking length validity.
-            if (newLine.length() != 9)
-            {
+            if (newLine.length() != 9) {
                 System.out.println("Error, input was different from expected length.");
                 validity = false;
             }
 
-            if (!validity)
-            {
+            if (!validity) {
                 System.out.println("Check your file, there is a problem.");
                 exit(2);
             }
 
             // iterates column within upper row. since I need the extra dimension, foreach won't work here.
-            for (iteratorY = 0; iteratorY < 9; iteratorY++)
-            {
+            for (iteratorY = 0; iteratorY < 9; iteratorY++) {
                 newBoard[iteratorX][iteratorY] = Character.getNumericValue(newLine.toCharArray()[iteratorY]); // can return -1 or -2 if invalid input is given
             }
 
@@ -179,57 +169,49 @@ public class Main
     }
 
     private static boolean Validator(Sudoku board) {
-        /**------------------------------------------------------------------------------------------------------------
-         *   Sudoku rules are as follows:                                                                              *
-         *     * A row cannot contain the same value more than once and must contain every value from 1-9              *
-         *     * A column cannot contain the same value more than once and must contain every value from 1-9           *
-         *     * Each 3x3 subgrid cannot contain the same value more than once and must contain every value from 1-9   *
-         *     * A Sudoku must contain enough information for the Sudoku to be solvable                                *
-         ------------------------------------------------------------------------------------------------------------**/
+//        **------------------------------------------------------------------------------------------------------------
+//         *   Sudoku rules are as follows:                                                                              *
+//         *     * A row cannot contain the same value more than once and must contain every value from 1-9              *
+//         *     * A column cannot contain the same value more than once and must contain every value from 1-9           *
+//         *     * Each 3x3 subgrid cannot contain the same value more than once and must contain every value from 1-9   *
+//         *     * A Sudoku must contain enough information for the Sudoku to be solvable                                *
+//         ------------------------------------------------------------------------------------------------------------**/
 
         // Use valueBank to store previous values and check against valueBank to determine validity.
         // valueBank's index of 0 can equal 1 and still be valid!
 
         System.out.println("Checking Sudoku's validity...");
 
-        /** Row Validity Checks **/
+        //** Row Validity Checks **/
 
         int[] valueBank = new int[10];
         boolean validity = true;
         int i;
-        for (i = 0; i < 9; i++)
-        {
-            for (int cell : board.getBoardRow(i))
-            {
-                if (cell != 0 && valueBank[cell] == 1)
-                {
+        for (i = 0; i < 9; i++) {
+            for (int cell : board.getBoardRow(i)) {
+                if (cell != 0 && valueBank[cell] == 1) {
                     System.out.println("ROW CHECK FAILED: Duplicate detected in row " + i + " : " + cell);
                     validity = false;
-                }
-                else
+                } else
                     valueBank[cell] = 1;
             }
             Arrays.fill(valueBank, 0);
         }
 
-        /** Column Validity Checks **/
+        //** Column Validity Checks **/
 
-        for (i = 0; i < 9; i++)
-        {
-            for (int cell : board.getBoardColumn(i))
-            {
-                if (valueBank[cell] == 1 && cell != 0)
-                {
+        for (i = 0; i < 9; i++) {
+            for (int cell : board.getBoardColumn(i)) {
+                if (valueBank[cell] == 1 && cell != 0) {
                     System.out.println("COLUMN CHECK FAILED: Duplicate detected in column " + i + " : " + cell);
                     validity = false;
-                }
-                else
+                } else
                     valueBank[cell] = 1;
             }
             Arrays.fill(valueBank, 0);
         }
 
-        /** Block Validity Checks **/
+        //** Block Validity Checks **/
 
         int[] block; // this stores the 3x3 block to be checked
 
@@ -238,12 +220,10 @@ public class Main
             // offsets are used instead of weird math as indices which fixed the problem
             block = board.getBoardBlock(blockIndex);
             for (int cell : block) {
-                if (valueBank[cell] == 1 && cell != 0)
-                {
+                if (valueBank[cell] == 1 && cell != 0) {
                     validity = false;
                     System.out.println("BLOCK CHECK FAILED: Duplicate detected in block " + blockIndex + ": " + cell);
-                }
-                else
+                } else
                     valueBank[cell] = 1;
             }
             Arrays.fill(valueBank, 0);
@@ -252,8 +232,7 @@ public class Main
         return validity;
     }
 
-    private static boolean SolutionFinder(Sudoku sudoku)
-    {
+    private static boolean SolutionFinder(Sudoku sudoku) {
         // System.out.println("Generative Recursion");
 
         int iteration = 0;
@@ -277,14 +256,13 @@ public class Main
             int row = emptyCell[0];
             int col = emptyCell[1];
             int[] possibleNumbers = getPossibleNumbers(sudoku, row, col);
-            if (possibleNumbers.length == 0)
-            {
+            if (possibleNumbers.length == 0) {
                 System.out.println("Error: No possible values for " + row + ", " + col + " on iteration " + iteration);
                 return false;
             }
             int[] uniqueValuesInBlock = getUniqueValuesInBlock(sudoku, row, col);
-            int[] uniqueValuesInRow = getUniqueValuesInRow(sudoku, row, col);
-            int[] uniqueValuesInCol = getUniqueValuesInCol(sudoku, row, col);
+            int[] uniqueValuesInRow = getUniqueValuesInRow(sudoku, row);
+            int[] uniqueValuesInCol = getUniqueValuesInCol(sudoku, col);
 
 
             if (possibleNumbers.length == 1) {// If there is one possibility for the cell // for (int number : possibleNumbers) {
@@ -364,6 +342,7 @@ public class Main
 
         return possibleNumbersArray;
     }
+
     private static int[] getUniqueValuesInBlock(Sudoku sudoku, int row, int col) {
         int blockStartRow = (row / 3) * 3;
         int blockStartCol = (col / 3) * 3;
@@ -392,16 +371,16 @@ public class Main
         return Arrays.copyOf(uniqueValues, index);
     }
 
-    private static int[] getUniqueValuesInRow(Sudoku sudoku, int row, int col) {
+    private static int[] getUniqueValuesInRow(Sudoku sudoku, int row) {
 
         int[] count = new int[10]; // Index 0 is not used
 
         // Iterate over the row
         for (int i = 0; i < 9; i++) {
-                int[] possibleNumbers = getPossibleNumbers(sudoku, row, i);
-                for (int num : possibleNumbers) {
-                    count[num]++;
-                }
+            int[] possibleNumbers = getPossibleNumbers(sudoku, row, i);
+            for (int num : possibleNumbers) {
+                count[num]++;
+            }
         }
 
         // gets numbers that only appear once in the block
@@ -416,7 +395,7 @@ public class Main
         return Arrays.copyOf(uniqueValues, index);
     }
 
-    private static int[] getUniqueValuesInCol(Sudoku sudoku, int row, int col) {
+    private static int[] getUniqueValuesInCol(Sudoku sudoku, int col) {
 
         int[] count = new int[10]; // Index 0 is not used
 
@@ -461,7 +440,7 @@ public class Main
         }
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
-                if(board[i][j] == 0 && !sudoku.visited[i][j]) {// If cell is empty and has yet to be checked
+                if (board[i][j] == 0 && !sudoku.visited[i][j]) {// If cell is empty and has yet to be checked
                     sudoku.visited[i][j] = true;
                     return new int[]{i, j};     // Return row and column of cell
                 }
@@ -481,7 +460,7 @@ public class Main
     // Check if number is in row
     private static boolean isNumberInRow(Sudoku sudoku, int number, int row) {
         int[] boardRow = sudoku.getSolutionRow(row);
-        for (int cell: boardRow) {
+        for (int cell : boardRow) {
             if (cell == number) {
                 return true;
             }
@@ -492,7 +471,7 @@ public class Main
     // Check if number is in column
     private static boolean isNumberInColumn(Sudoku sudoku, int number, int col) {
         int[] boardCol = sudoku.getSolutionColumn(col);
-        for (int cell: boardCol) {
+        for (int cell : boardCol) {
             if (cell == number) {
                 return true;
             }
@@ -503,7 +482,7 @@ public class Main
     // Check if number is in block
     private static boolean isNumberInBlock(Sudoku sudoku, int number, int row, int col) {
         int[] boardBlock = sudoku.getSolutionBlock((row / 3) * 3 + (col / 3));
-        for (int cell: boardBlock) {
+        for (int cell : boardBlock) {
             if (cell == number) {
                 return true;
             }
@@ -523,13 +502,13 @@ public class Main
 
         String input = s.nextLine();
 
-        switch (input.charAt(0)){
+        switch (input.charAt(0)) {
             case '1':
                 sudoku = new Sudoku(InitializeSudokuFromUserInput());
                 break;
             case '2':
                 // Check if file exits
-                if(f.exists() && !f.isDirectory()) {
+                if (f.exists() && !f.isDirectory()) {
                     sudoku = new Sudoku(InitializeSudokuFromFile(f));
                 } else {
                     // Otherwise take user input
@@ -543,19 +522,16 @@ public class Main
                 exit(0);
         }
 
-        if (sudoku == null)
-        {
+        if (sudoku == null) {
             System.out.println("Sudoku object is null. Exiting...");
             exit(1);
         }
 
         // Check if board is valid
-        if (!Validator(sudoku))
-        {
+        if (!Validator(sudoku)) {
             System.out.println("The Sudoku provided wasn't valid. Exiting...");
             exit(1);
-        }
-        else {
+        } else {
             System.out.println("The Sudoku is syntactically sound.");
         }
 
@@ -569,19 +545,17 @@ public class Main
         System.out.println("Beginning solving algorithm...");
         if (SolutionFinder(sudoku)) {
             System.out.println("The Sudoku has been solved successfully!");
-        }
-        else {
+        } else {
             System.out.println("The Sudoku is unsolvable. Womp womp.");
         }
 
         System.out.println("Would you like to input another puzzle? Y/N");
         input = s.nextLine();
-        switch (input.charAt(0))
-        {
+        switch (input.charAt(0)) {
             case 'y':
             case 'Y':
-               sequence();
-               break;
+                sequence();
+                break;
             case 'n':
             case 'N':
                 System.out.println("Exiting...");
@@ -605,8 +579,7 @@ public class Main
         }
     }
 
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         Main program = new Main();
         program.sequence();
     }
